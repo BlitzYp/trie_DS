@@ -1,59 +1,64 @@
 #include <iostream>
 #include <vector>
 
-struct leafNode {
+struct Leaf {
     std::string key;
     std::string value;
-    struct leafNode* next;
+    Leaf* next;
+    Leaf(std::string key, std::string value, Leaf* next) {
+        this->key = key;
+        this->value = value;
+        this->next = next;
+    }
 };
 
-struct trie {
-    char value;
-    std::vector<trie*> connections;
-    leafNode* leaf;
+class Trie {
+public:
+    std::vector<Trie*> connections;
+    Leaf* leaf;
+    Trie() {
+        connections = std::vector<Trie*>(26);
+        for (int i = 0; i < 26; i++) {
+            connections[i] = NULL;
+        }
+        leaf = NULL;
+    }
+
+    void add(std::string key, std::string value) {
+        Trie* start = this;
+        for (char value: key) {
+            int index = (int)value % 26;
+            if (start->connections[index] == NULL) {
+                start->connections[index] = new Trie();
+            }
+            start = start->connections[index];
+        }
+        start->leaf = new Leaf(key, value, start->leaf);
+    }
+
+    std::string get(std::string key) {
+        Trie* start = this;
+        for (char value: key) {
+            int index = (int)value % 26;
+            if (start->connections[index] == NULL) {
+                return NULL;
+            }
+            start = start->connections[index];
+        }
+        Leaf* currLeaf = start->leaf;
+        while (currLeaf->key != key && currLeaf->next != NULL)  {
+            currLeaf = currLeaf->next;
+        }
+        return currLeaf->value;
+    }
 };
 
-void insert(std::string key, std::string value, trie* head) {
-    trie* curr = head;
-    for (auto i: key) {
-        int index = i % 26;
-        if (curr->connections[index] == NULL) {
-            trie* newTrie = (trie*)malloc(sizeof(trie));
-            newTrie->value = i;
-            newTrie->connections = std::vector<trie*>(26);
-            newTrie->leaf = NULL;
-            curr->connections[index] = newTrie;
-        }
-        curr = curr->connections[index];
-    }
-    leafNode* newNode = (leafNode*)malloc(sizeof(leafNode));
-    newNode->key = key;
-    newNode->value = value;
-    newNode->next = curr->leaf;
-    curr->leaf = newNode;
-}
-
-std::string get(std::string key, trie* head) {
-    trie* curr = head;
-    for (auto i: key) {
-        int index = i % 26;
-        if (curr->connections[index] == NULL) {
-            perror("This key doesn't exist");
-            exit(0);
-        }
-        curr = curr->connections[index];
-    }
-    leafNode* res = curr->leaf;
-    while (res->key != key && res->next != NULL) res = res->next;
-    return res->value;
-}
-
-int main() {
-    trie head = {NULL, std::vector<trie*>(26), NULL};
-    insert("123", "Blitz", &head);
-    insert("1233", "John", &head);
-    insert("pizza", "SuperDickHuge", &head);
-    std::cout << get("123", &head) << '\n';
-    std::cout << get("pizza", &head) << '\n';
+int main(void) {
+    Trie trie = Trie();
+    trie.add("Apples", "5");
+    trie.add("Bob", "Gay");
+    std::cout << trie.get("Apples") << std::endl;
+    std::cout << trie.get("Bob") << std::endl;
+    std::cout << trie.get("Alice") << std::endl;
     return 0;
 }
